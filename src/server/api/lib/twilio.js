@@ -105,7 +105,8 @@ async function sendMessage(message) {
       to: message.contact_number,
       messagingServiceSid: process.env.TWILIO_MESSAGE_SERVICE_SID,
       body: message.text,
-      statusCallback: process.env.TWILIO_STATUS_CALLBACK_URL
+      statusCallback: process.env.TWILIO_STATUS_CALLBACK_URL,
+      validityPeriod: process.env.TWILIO_MESSAGE_VALIDITY_PERIOD
     }, (err, response) => {
       const messageToSave = {
         ...message
