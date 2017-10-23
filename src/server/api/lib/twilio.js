@@ -92,7 +92,7 @@ async function sendMessage(message) {
     log.warn('cannot actually send SMS message -- twilio is not fully configured:', message.id)
     if (message.id) {
       await Message.get(message.id)
-        .update({ send_status: 'SENT' })
+        .update({ send_status: 'SENT', sent_at: Date.now()})
     }
     return 'test_message_uuid'
   }
@@ -150,14 +150,14 @@ async function sendMessage(message) {
 async function handleDeliveryReport(report) {
   const messageSid = report.MessageSid
   if (messageSid) {
+    await r.table('message').insert({ message_id: report.MessageSid, body: report })
     const messageStatus = report.MessageStatus
     const message = await r.table('message')
       .getAll(messageSid, { index: 'service_id' })
       .limit(1)(0)
       .default(null)
-
     if (message) {
-      message.service_response += JSON.stringify(report)
+      message.service_response_at = Date.now()
       if (messageStatus === 'delivered') {
         message.send_status = 'DELIVERED'
       } else if (messageStatus === 'failed' ||
