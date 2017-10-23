@@ -101,17 +101,14 @@ async function sendMessage(message) {
     if (message.service !== 'twilio') {
       log.warn('Message not marked as a twilio message', message.id)
     }
-    let messageParams = {
+    const messageParams = {
       to: message.contact_number,
       messagingServiceSid: process.env.TWILIO_MESSAGE_SERVICE_SID,
       body: message.text,
       statusCallback: process.env.TWILIO_STATUS_CALLBACK_URL
     }
     if (process.env.TWILIO_MESSAGE_VALIDITY_PERIOD) {
-      messageParams = Object.assign(
-        messageParams,
-        { validityPeriod: process.env.TWILIO_MESSAGE_VALIDITY_PERIOD }
-      )
+      messageParams.validityPeriod = process.env.TWILIO_MESSAGE_VALIDITY_PERIOD
     }
     twilio.messages.create(messageParams, (err, response) => {
       const messageToSave = {
