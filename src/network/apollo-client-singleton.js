@@ -31,7 +31,7 @@ const networkInterface = addQueryMerging(responseMiddlewareNetworkInterface)
 
 const ApolloClientSingleton = new ApolloClient({
   networkInterface,
-  shouldBatch: true,
+  shouldBatch: false,
   dataIdFromObject: (result) => result.id
 })
 export default ApolloClientSingleton
