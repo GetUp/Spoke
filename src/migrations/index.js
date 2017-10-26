@@ -103,6 +103,15 @@ const migrations = [
       })
       console.log('added log table')
     }
+  },
+  { auto: true, //10
+    date: '2017-10-23',
+    migrate: async function migrate() {
+      await r.knex.schema.alterTable('assignment', (table) => {
+        table.boolean('active').default(false);
+      })
+      console.log('added active boolean to assignment')
+    }
   }
 
   /* migration template

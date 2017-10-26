@@ -31,11 +31,21 @@ const styles = StyleSheet.create({
 class AssignmentTexter extends React.Component {
   constructor(props) {
     super(props)
-
+    debugger;
     this.state = {
+      organizationId: props.organizationId,
+      assignmentId: props.assignment.id,
+      predictive: props.predictive,
       currentContactIndex: 0,
       direction: 'right'
     }
+  }
+
+  transitionToPredictive = () => {
+    console.log('transitionToPredictive')
+    const { router } = this.props
+    const { organizationId, assignmentId } = this.state
+    router.push(`/app/${organizationId}/todos/${assignmentId}/predictive`)
   }
 
   getContact(contacts, index) {
@@ -59,12 +69,16 @@ class AssignmentTexter extends React.Component {
   }
 
   hasNext() {
+    console.log('~~~~~~~~~~~~ has next', this.state.currentContactIndex < this.contactCount() - 1)
     return this.state.currentContactIndex < this.contactCount() - 1
   }
 
   handleFinishContact = () => {
+    const { predictive } = this.state
     if (this.hasNext()) {
       this.handleNavigateNext()
+    } else if (predictive) {
+      this.transitionToPredictive()
     } else {
       // Will look async and then redirect to todo page if not
       this.props.assignContactsIfNeeded(true)

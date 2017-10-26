@@ -12,6 +12,7 @@ import TopNav from './components/TopNav'
 import DashboardLoader from './containers/DashboardLoader'
 import TexterTodoList from './containers/TexterTodoList'
 import TexterTodo from './containers/TexterTodo'
+import TexterPredictive from './containers/TexterPredictive'
 import Login from './components/Login'
 import Terms from './containers/Terms'
 import React from 'react'
@@ -57,13 +58,19 @@ export default function makeRoutes(requireAuth = () => {}) {
             />
             <Route path=':assignmentId'>
               <Route
+                path='predictive'
+                components={{
+                  fullScreen: (props) => <TexterPredictive {...props} />
+                }}
+              />
+              <Route
                 path='text'
                 components={{
                   fullScreen: (props) => <TexterTodo {...props} messageStatus='needsMessage' />
                 }}
               />
               <Route
-                path='reply'
+                path='reply/:predictive'
                 components={{
                   fullScreen: (props) => <TexterTodo {...props} messageStatus='needsResponse' />,
                   topNav: null

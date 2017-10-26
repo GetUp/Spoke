@@ -12,7 +12,8 @@ export const schema = `
     contactsCount(contactsFilter: ContactsFilter): Int
     userCannedResponses: [CannedResponse]
     campaignCannedResponses: [CannedResponse]
-    maxContacts: Int
+    maxContacts: Int,
+    active: Boolean
   }
 `
 

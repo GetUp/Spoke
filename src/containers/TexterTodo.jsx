@@ -37,12 +37,15 @@ class TexterTodo extends React.Component {
 
   render() {
     const { assignment } = this.props.data
+    const { organizationId, predictive } = this.props.params
     const contacts = assignment.contacts
     return (<AssignmentTexter
       assignment={assignment}
       contacts={contacts}
       assignContactsIfNeeded={this.assignContactsIfNeeded.bind(this)}
       refreshData={this.refreshData.bind(this)}
+      organizationId={organizationId}
+      predictive={predictive || false}
     />)
   }
 }

@@ -20,6 +20,7 @@ import { setupUserNotificationObservers } from './notifications'
 import { Tracer } from 'apollo-tracer'
 import { TwimlResponse } from 'twilio'
 import { r } from './models'
+import socket from './socket'
 
 process.on('uncaughtException', (ex) => {
   log.error(ex)
@@ -207,6 +208,8 @@ app.use('/graphql', apolloServer((req) => ({
   allowUndefinedInResolve: false
 })))
 
+// socket io middleware for predictive texter status
+app.use(socket)
 
 // This middleware should be last. Return the React app only if no other route is hit.
 app.use(appRenderer)

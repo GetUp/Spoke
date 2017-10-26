@@ -1,10 +1,12 @@
-import { r } from '../server/models'
+import { User, Message, r } from '../server/models'
 import { sleep, getNextJob, updateJob } from './lib'
 import { log } from '../lib'
 import { exportCampaign, uploadContacts, assignTexters, createInteractionSteps, sendMessages, handleIncomingMessageParts } from './jobs'
 import { runMigrations } from '../migrations'
 import { setupUserNotificationObservers } from '../server/notifications'
-
+import camelCaseKeys from 'camelcase-keys'
+import { resolvers as campaignContactResolvers } from '../server/api/campaign-contact'
+import { applyScript } from '../lib/scripts'
 
 /* Two process models are supported in this file.
    The main in both cases is to process jobs and send/receive messages
@@ -118,6 +120,69 @@ export async function handleIncomingMessages() {
 
 export async function runDatabaseMigrations(event, dispatcher) {
   runMigrations(event.migrationStart)
+}
+
+export async function messageQueuer(assignment) {
+  const replaceCurlyApostrophes = (rawText) => rawText
+    .replace(/[\u2018\u2019]/g, "'")
+
+  const bulkRatio = Math.ceil(process.env.PREDICTIVE_SEND_CHUNK_SIZE * assignment.intensity)
+  const assignedCampaignContacts = await r.knex.raw(`UPDATE campaign_contact
+    SET assignment_id = :assignment_id, message_status = :message_status
+    WHERE id IN (
+      SELECT id
+      FROM campaign_contact cc
+      WHERE campaign_id = :campaign_id
+      AND assignment_id IS null
+      AND message_status = 'needsMessage'
+      AND NOT is_opted_out
+      LIMIT :number_contacts
+    )
+    RETURNING *
+    `, { assignment_id: assignment.id, message_status: 'messaged', campaign_id: assignment.campaign_id, number_contacts: bulkRatio })
+
+  if (assignedCampaignContacts.rowCount === 0) return
+
+  const texter = camelCaseKeys(await User.get(assignment.user_id))
+  const customFields = Object.keys(JSON.parse(assignedCampaignContacts.rows[0].custom_fields))
+
+  return await assignedCampaignContacts.rows.map(async (contact) => {
+
+    const script = await campaignContactResolvers.CampaignContact.currentInteractionStepScript(contact)
+    const text = applyScript({
+      contact: camelCaseKeys(contact),
+      texter,
+      script,
+      customFields
+    })
+
+    const messageFields = {
+      text: replaceCurlyApostrophes(text),
+      contact_number: contact.cell,
+      user_number: '',
+      assignment_id: assignment.id,
+      send_status: 'QUEUED',
+      service: process.env.DEFAULT_SERVICE || '',
+      is_from_contact: false,
+      queued_at: new Date()
+    }
+    const messageInstance = new Message(messageFields)
+    await messageInstance.save()
+  })
+}
+
+export async function assignmentQueuer() {
+  while (true) {
+    try {
+      const activeAssignments = await r.knex('assignment').where({ active: true })
+      if (activeAssignments) {
+        await activeAssignments.map(async (assignment) => await messageQueuer(assignment))
+      }
+      await sleep(process.env.PREDICTIVE_ITERATION_PERIOD)
+    } catch (ex) {
+      log.error(ex)
+    }
+  }
 }
 
 const processMap = {
