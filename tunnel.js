@@ -3,7 +3,7 @@ const ngrok = require('ngrok')
 
 ngrok.connect({
   proto: 'http',
-  addr: 5000,
+  addr: process.env.PORT,
   subdomain: process.env.NGROK_SUBDOMAIN,
   authtoken: process.env.NGROK_AUTH_TOKEN
 }, function (err, url) {

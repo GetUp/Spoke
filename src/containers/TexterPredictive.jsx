@@ -16,8 +16,7 @@ import _ from 'lodash'
 import PageVisibility from 'react-page-visibility';
 import socket from 'socket.io-client';
 
-const io = socket('http://localhost:8080');
-const ASSIGNMENT_ACTIVITY_POLL_INTERVAL = 5000
+const io = socket(window.BASE_URL);
 
 const styles = {
   headline: {
@@ -81,7 +80,7 @@ export default class TexterPredictive extends React.Component {
       poll: setInterval(() => {
         let { texterVisible, currentTab, assignmentId, intensity } = this.state
         io.emit('assignmentActivityPoll', {active: (texterVisible && currentTab == 'sendTab'), assignmentId, intensity});
-      }, ASSIGNMENT_ACTIVITY_POLL_INTERVAL)
+      }, window.PREDICTIVE_ITERATION_PERIOD)
     })
   }
 
