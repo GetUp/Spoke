@@ -16,7 +16,7 @@ import _ from 'lodash'
 import PageVisibility from 'react-page-visibility';
 import socket from 'socket.io-client';
 
-const io = socket('https://spoke-gu.herokuapp.com');
+const io = socket('http://localhost:8080');/*window.BASE_URL*/
 
 const styles = {
   headline: {
