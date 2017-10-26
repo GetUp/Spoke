@@ -16,7 +16,7 @@ import _ from 'lodash'
 import PageVisibility from 'react-page-visibility';
 import socket from 'socket.io-client';
 
-const io = socket(window.BASE_URL);
+const io = socket('https://spoke-gu.herokuapp.com');
 
 const styles = {
   headline: {
@@ -80,7 +80,7 @@ export default class TexterPredictive extends React.Component {
       poll: setInterval(() => {
         let { texterVisible, currentTab, assignmentId, intensity } = this.state
         io.emit('assignmentActivityPoll', {active: (texterVisible && currentTab == 'sendTab'), assignmentId, intensity});
-      }, window.PREDICTIVE_ITERATION_PERIOD)
+      }, 2000/*window.PREDICTIVE_ITERATION_PERIOD*/)
     })
   }
 
