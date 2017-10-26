@@ -5,4 +5,4 @@ messagesender234: npm run prod-message-sender-234
 messagesender56: npm run prod-message-sender-56
 messagesender789: npm run prod-message-sender-789
 incomingmessagehandler: npm run prod-incoming-message-handler
-predictive-assignment-queuer: npm run prod-predictive-assignment-queuer
+predictiveassignmentqueuer: npm run prod-predictive-assignment-queuer

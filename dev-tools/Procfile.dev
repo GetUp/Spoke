@@ -7,4 +7,4 @@ messagesender56: npm run dev-message-sender-56
 #messagesender789: npm run dev-message-sender-789
 #jobhandler: npm run dev-job-handler
 incomingmessagehandler: npm run dev-incoming-message-handler
-predictive-assignment-queuer: npm run dev-predictive-assignment-queuer
+predictiveassignmentqueuer: npm run dev-predictive-assignment-queuer
