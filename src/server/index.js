@@ -209,7 +209,7 @@ app.use('/graphql', apolloServer((req) => ({
 })))
 
 // socket io middleware for predictive texter status
-app.use(socket)
+//app.use(socket)
 
 // This middleware should be last. Return the React app only if no other route is hit.
 app.use(appRenderer)
