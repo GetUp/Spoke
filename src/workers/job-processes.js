@@ -178,7 +178,7 @@ export async function assignmentQueuer() {
       if (activeAssignments) {
         await activeAssignments.map(async (assignment) => await messageQueuer(assignment))
       }
-      console.log('~~~~~~ Assginment Queuer', activeAssignments)
+      console.log('~~~~~~ Assginment Queuer', activeAssignments.length)
       await sleep(process.env.PREDICTIVE_ITERATION_PERIOD)
     } catch (ex) {
       log.error(ex)
