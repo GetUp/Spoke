@@ -48,7 +48,11 @@ function getContacts(assignment, contactsFilter, organization, campaign) {
     }
 
     if (contactsFilter.hasOwnProperty('messageStatus') && contactsFilter.messageStatus !== null) {
-      query = query.where('message_status', contactsFilter.messageStatus)
+      if (contactsFilter.messageStatus === 'needsMessageOrResponse') {
+        query = query.whereIn('message_status', ['needsResponse', 'needsMessage']).orderByRaw("message_status DESC, updated_at")
+      } else {
+        query = query.where('message_status', contactsFilter.messageStatus)
+      }
     } else {
       if (pastDue) {
         // by default if asking for 'send later' contacts we include only those that need replies
@@ -63,7 +67,6 @@ function getContacts(assignment, contactsFilter, organization, campaign) {
       query = query.where('is_opted_out', contactsFilter.isOptedOut)
     }
   }
-  
   return query
 }
 
