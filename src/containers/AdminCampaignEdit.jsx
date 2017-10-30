@@ -209,18 +209,6 @@ class AdminCampaignEdit extends React.Component {
           contactsCount: texter.assignment.contactsCount
         }))
       }
-      if (newCampaign.hasOwnProperty('interactionSteps')) {
-        newCampaign.interactionSteps = newCampaign.interactionSteps.map((step) => ({
-          id: step.id,
-          question: step.question ? step.question.text : null,
-          script: step.script,
-          answerOptions: step.question ? step.question.answerOptions.map((answer) => ({
-            value: answer.value,
-            action: answer.action,
-            nextInteractionStepId: answer.nextInteractionStep ? answer.nextInteractionStep.id : null
-          })) : []
-        }))
-      }
       await this
         .props
         .mutations
