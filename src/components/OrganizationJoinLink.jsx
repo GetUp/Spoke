@@ -7,12 +7,19 @@ const OrganizationJoinLink = ({ organizationUuid, campaignId }) => {
     baseUrl = window.location.origin
   }
 
-  const joinUrl = `${baseUrl}/${organizationUuid}/join/${campaignId}`
+  let joinText, joinUrl 
+  if (campaignId) {
+    joinUrl = `${baseUrl}/${organizationUuid}/join-campaign/${campaignId}`
+    joinText = "Send your texting volunteers this link! Once they sign up, they'll be automatically assigned to this campaign."
+  } else {
+    joinUrl = `${baseUrl}/${organizationUuid}/join-organization`
+    joinText = "Send your texting volunteers this link! Once they sign up, they'll be automatically assigned to your organization."
+  }
 
   return (
     <div>
       <div>
-        Send your texting volunteers this link! Once they sign up, they'll be automatically assigned to this campaign.
+        {joinText}
       </div>
       <TextField
         value={joinUrl}
