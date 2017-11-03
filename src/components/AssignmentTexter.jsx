@@ -31,7 +31,6 @@ const styles = StyleSheet.create({
 class AssignmentTexter extends React.Component {
   constructor(props) {
     super(props)
-
     this.state = {
       currentContactIndex: 0,
       direction: 'right'
