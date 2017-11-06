@@ -133,6 +133,7 @@ const rootSchema = `
   input TexterInput {
     id: String
     needsMessageCount: Int
+    maxContacts: Int
     contactsCount: Int
   }
 
@@ -140,6 +141,7 @@ const rootSchema = `
     title: String
     description: String
     dueBy: Date
+    useDynamicAssignment: Boolean
     contacts: [CampaignContactInput]
     contactSql: String
     organizationId: String
@@ -204,7 +206,9 @@ const rootSchema = `
     startCampaign(id:String!): Campaign,
     archiveCampaign(id:String!): Campaign,
     unarchiveCampaign(id:String!): Campaign,
-    sendReply(id: String!, message: String!): CampaignContact
+    sendReply(id: String!, message: String!): CampaignContact,
+    findNewCampaignContact(assignmentId: String!, numberContacts: Int!): CampaignContact,
+    assignUserToCampaign(campaignId: String!): Campaign
   }
 
   schema {
@@ -214,13 +218,14 @@ const rootSchema = `
 `
 
 async function editCampaign(id, campaign, loaders, user) {
-  const { title, description, dueBy, organizationId } = campaign
+  const { title, description, dueBy, organizationId, useDynamicAssignment } = campaign
   const campaignUpdates = {
     id,
     title,
     description,
     due_by: dueBy,
-    organization_id: organizationId
+    organization_id: organizationId,
+    use_dynamic_assignment: useDynamicAssignment
   }
 
   Object.keys(campaignUpdates).forEach((key) => {
@@ -292,6 +297,13 @@ async function editCampaign(id, campaign, loaders, user) {
         assignTexters(job)
       }
     }
+    // assign the maxContacts
+    campaign.texters.forEach(async (texter) => {
+      await r.knex('campaign').where({id: id}).select('useDynamicAssignment')
+      await r.knex('assignment')
+        .where({user_id: texter.id, campaign_id: id})
+        .update({max_contacts: texter.maxContacts ? texter.maxContacts : null})
+    });
   }
   if (campaign.hasOwnProperty('interactionSteps')) {
     let job = await JobRequest.save({
@@ -579,6 +591,43 @@ const rootMutations = {
       contact.message_status = messageStatus
       return await contact.save()
     },
+
+    findNewCampaignContact: async(_, { assignmentId, numberContacts }, { loaders, user } ) => {
+      /* This attempts to find a new contact for the assignment, in the case that useDynamicAssigment == true */
+      const assignment = await Assignment.get(assignmentId)
+      const campaign = await Campaign.get(assignment.campaign_id)
+      const contactsCount = Number((await r.knex('campaign_contact').where({assignment_id: assignmentId}).select(r.knex.raw('count(*) as count')))[0].count)
+      if (!campaign.use_dynamic_assignment) {
+        return false
+      }
+      numberContacts = numberContacts || 1
+      if (assignment.max_contacts && (contactsCount + numberContacts > assignment.max_contacts)){
+        numberContacts = assignment.max_contacts - contactsCount
+      }
+      // Don't add them if they already have them
+      const result = await r.knex.raw(`SELECT COUNT(*) as count FROM campaign_contact WHERE assignment_id = :assignment_id AND message_status = 'needsMessage' AND is_opted_out = false`, {assignment_id: assignmentId})
+      if (result.rows[0].count >= numberContacts){
+        return false
+      } 
+      const result2 = await r.knex.raw(`UPDATE campaign_contact
+        SET assignment_id = :assignment_id
+        WHERE id IN (
+          SELECT id
+          FROM campaign_contact cc
+          WHERE campaign_id = :campaign_id
+          AND assignment_id IS null
+          LIMIT :number_contacts
+        )
+        RETURNING *
+        `, {assignment_id: assignmentId, campaign_id: campaign.id, number_contacts: numberContacts})
+
+      if (result2.rowCount > 0){
+        return true
+      } else {  
+        return false
+      }
+    },
+
     createOptOut: async(_, { optOut, campaignContactId }, { loaders, user }) => {
       const contact = await loaders.campaignContact.load(campaignContactId)
       await assignmentRequired(user, contact.assignment_id)
