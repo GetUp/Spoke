@@ -1,28 +1,32 @@
 import { CampaignContact } from '../models'
 import request from 'request-promise-native'
 
-export const displayName = () => 'NationBuilder Event RSVP'
-
-export const instructions = () => (
-  `
+/*
   Campaign contacts must be uploaded with the following custom fields:
   * nationbuilder_id: id of the campaign contact in NB
   * nationbuilder_event_ids: list of available events. It should be in the same order as event list displayed.
-  
+
   The following envionment variables are also required:
   * NATIONBUILDER_API_TOKEN
   * NATIONBUILDER_SITE_SLUG
   * NATIONBUILDER_NATION
   * NATIONBUILDER_DEBUG (optional - it'll dump the output of api request stderr)
-  
+
   You should then add a question that displays a list of events (likely populated from a custom field) and create
   as many question responses as the maximum number of events that can be selected. Add this handler to that question.
-  
+
   The question responses should have the index of the event in the name (with the index at 1). E.g. the response 
   with name "Event 1" would reference the first event in the nationbuilder_event_ids list.
 
   When a question response is selected, it will find the event id for that index and attempt to RSVP this person to
   the event using the NationBuilder API. It'll write the result of the API call into the custom fields.
+*/
+
+export const displayName = () => 'NationBuilder Event RSVP'
+
+export const instructions = () => (
+  `
+Contacts must be uploaded with nationbuilder_id and nationbuilder_event_ids fields.
   `
 )
 

@@ -19,8 +19,8 @@ describe('nationbuilder-rsvp handler', () => {
   })
 
   describe('instructions', () => {
-    it('should mention the required env variables', () => {
-      expect(instructions()).toMatch(/NATIONBUILDER_API_TOKEN/)
+    it('should mention the custom fields required', () => {
+      expect(instructions()).toMatch(/nationbuilder_event_ids/)
     })
   })
 
