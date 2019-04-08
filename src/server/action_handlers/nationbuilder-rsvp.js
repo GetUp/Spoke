@@ -47,9 +47,12 @@ export async function processAction(questionResponse, interactionStep, campaignC
   const contact = await CampaignContact.get(campaignContactId)
   const fields = JSON.parse(contact.custom_fields)
   let status, rsvp_id, message
+  const nationbuilder_event_ids = typeof(fields.nationbuilder_event_ids) === 'string' ?
+                                    JSON.parse(fields.nationbuilder_event_ids) :
+                                    fields.nationbuilder_event_ids
   if (debug) console.error('Fields and index: ', fields, eventIndex)
   if (fields.nationbuilder_event_ids) {
-    const eventId = fields.nationbuilder_event_ids[eventIndex]
+    const eventId = nationbuilder_event_ids[eventIndex]
     try {
       const params = {
         url: `https://${nation}.nationbuilder.com/api/v1/sites/${site}/pages/events/${eventId}/rsvps`,

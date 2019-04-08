@@ -46,7 +46,7 @@ describe('nationbuilder-rsvp handler', () => {
         fixtures.site_slug = process.env.NATIONBUILDER_SITE_SLUG = 'test_site'
         fixtures.token = process.env.NATIONBUILDER_API_TOKEN = 'test_token'
         fixtures.nation = process.env.NATIONBUILDER_NATION = 'test'
-        fixtures.nationbuilder_event_ids = [1, 2]
+        fixtures.nationbuilder_event_ids = '[1, 2]'
         fixtures.nationbuilder_id = 55 
         fixtures.organization = await Organization.save({ name: 'NationBuilder' })
         fixtures.campaign = await Campaign.save({ title: 'test', organization_id: fixtures.organization.id })
