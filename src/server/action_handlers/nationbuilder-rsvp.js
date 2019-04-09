@@ -37,45 +37,48 @@ export async function available(organizationId) {
 }
 
 export async function processAction(questionResponse, interactionStep, campaignContactId) {
-  const digitMatch = questionResponse.value.match(/(\d+)/)
+  const digitMatch = questionResponse.value.match(/(\d+)/g)
   if (!digitMatch) return;
   const nation = process.env.NATIONBUILDER_NATION
   const site = process.env.NATIONBUILDER_SITE_SLUG
   const token = process.env.NATIONBUILDER_API_TOKEN
   const debug = process.env.NATIONBUILDER_DEBUG
-  const eventIndex = parseInt(digitMatch, 10) - 1
+  const eventIndexes = digitMatch.map(match => parseInt(match, 10) - 1)
   const contact = await CampaignContact.get(campaignContactId)
   const fields = JSON.parse(contact.custom_fields)
-  let status, rsvp_id, message
+  let status, rsvp_id, message, eventId, rsvp, params
   const nationbuilder_event_ids = typeof(fields.nationbuilder_event_ids) === 'string' ?
                                     JSON.parse(fields.nationbuilder_event_ids) :
                                     fields.nationbuilder_event_ids
-  if (debug) console.error('Fields and index: ', fields, eventIndex)
+  if (debug) console.error('Fields and index: ', fields, eventIndexes)
   if (fields.nationbuilder_event_ids) {
-    const eventId = nationbuilder_event_ids[eventIndex]
-    try {
-      const params = {
-        url: `https://${nation}.nationbuilder.com/api/v1/sites/${site}/pages/events/${eventId}/rsvps`,
-        qs: { access_token: token },
-        json: { rsvp: { event_id: eventId , person_id: fields.nationbuilder_id }}
-      }
-      if (debug) console.error('Request: ', params)
-      if (debug) request.debug = true
-      const rsvp = await request.post(params)
-      if (debug) console.error('Success: ', rsvp)
-      status = 'success'
-      rsvp_id = rsvp.id
-    } catch (e) {
-      if (e.toString().match(/signup_id has already been taken/)) {
+    for (let i = 0; i < eventIndexes.length; i++) {
+      const eventId = nationbuilder_event_ids[eventIndexes[i]]
+      try {
+        const params = {
+          url: `https://${nation}.nationbuilder.com/api/v1/sites/${site}/pages/events/${eventId}/rsvps`,
+          qs: { access_token: token },
+          json: { rsvp: { event_id: eventId , person_id: fields.nationbuilder_id }}
+        }
+        if (debug) console.error('Request: ', params)
+        if (debug) request.debug = true
+        const rsvp = await request.post(params)
+        if (debug) console.error('Success: ', rsvp)
         status = 'success'
-        message = 'already rsvped'
-      } else {
-        status = 'error'
-        message = e.toString()
+        rsvp_id = rsvp.id
+      } catch (e) {
+        if (e.toString().match(/signup_id has already been taken/)) {
+          status = 'success'
+          message = 'already rsvped'
+        } else {
+          if (debug) console.error('Error: ', e)
+          status = 'error'
+          message = e.toString()
+        }
       }
+      fields['nationbuilder_rsvp_' + eventId] = { status, created_at: new Date(), rsvp_id, message }
+      contact.custom_fields = JSON.stringify(fields)
+      await contact.save()
     }
-    fields['nationbuilder_rsvp_' + eventId] = { status, created_at: new Date(), rsvp_id, message }
-    contact.custom_fields = JSON.stringify(fields)
-    await contact.save()
   }
 }

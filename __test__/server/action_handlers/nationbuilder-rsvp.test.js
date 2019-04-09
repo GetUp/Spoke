@@ -71,16 +71,32 @@ describe('nationbuilder-rsvp handler', () => {
         })
       })
 
-      it('should call the NationBuilder API', async () => {
-        const rsvpApi = nock(`https://${fixtures.nation}.nationbuilder.com`)
-          .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, { rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2 } } )
-          .query({ access_token: fixtures.token })
-          .reply(200, { rsvp: { id: 1, event_id: 2, person_id: fixtures.nationbuilder_id }})
-        await processAction(fixtures.questionResponse, fixtures.interactionStep, fixtures.campaignContact.id);
-        const updatedCampaignContact = await CampaignContact.get(fixtures.campaignContact.id)
-        const updatedCustomFields = JSON.parse(updatedCampaignContact.custom_fields)
-        expect(updatedCustomFields['nationbuilder_rsvp_2']['status']).toBe('success')
-        expect(rsvpApi.isDone()).toBeTruthy()
+      describe('with two events selected', () => {
+        beforeEach(async () => {
+          fixtures.questionResponse = await QuestionResponse.save({
+            campaign_contact_id: fixtures.campaignContact.id,
+            interaction_step_id: fixtures.interactionStep.id,
+            value: 'Event 1 and Event 2'
+          })
+        })
+
+        it('should call the NationBuilder API', async () => {
+          const rsvpApi1 = nock(`https://${fixtures.nation}.nationbuilder.com`)
+            .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/1/rsvps`, { rsvp: { person_id: fixtures.nationbuilder_id, event_id: 1 } } )
+            .query({ access_token: fixtures.token })
+            .reply(200, { rsvp: { id: 1, event_id: 1, person_id: fixtures.nationbuilder_id }})
+          const rsvpApi2 = nock(`https://${fixtures.nation}.nationbuilder.com`)
+            .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, { rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2 } } )
+            .query({ access_token: fixtures.token })
+            .reply(200, { rsvp: { id: 2, event_id: 2, person_id: fixtures.nationbuilder_id }})
+          await processAction(fixtures.questionResponse, fixtures.interactionStep, fixtures.campaignContact.id);
+          const updatedCampaignContact = await CampaignContact.get(fixtures.campaignContact.id)
+          const updatedCustomFields = JSON.parse(updatedCampaignContact.custom_fields)
+          expect(updatedCustomFields['nationbuilder_rsvp_1']['status']).toBe('success')
+          expect(updatedCustomFields['nationbuilder_rsvp_2']['status']).toBe('success')
+          expect(rsvpApi1.isDone()).toBeTruthy()
+          expect(rsvpApi2.isDone()).toBeTruthy()
+        })
       })
 
       it('should record any errors with the API', async () => {
