@@ -11,6 +11,7 @@ import request from 'request-promise-native'
   * NATIONBUILDER_SITE_SLUG
   * NATIONBUILDER_NATION
   * NATIONBUILDER_DEBUG (optional - it'll dump the output of api request stderr)
+  * NATIONBUILDER_RECRUITER_ID (optional - it'll set the recruiter_id on the RSVP)
 
   You should then add a question that displays a list of events (likely populated from a custom field) and create
   as many question responses as the maximum number of events that can be selected. Add this handler to that question.
@@ -43,6 +44,7 @@ export async function processAction(questionResponse, interactionStep, campaignC
   const site = process.env.NATIONBUILDER_SITE_SLUG
   const token = process.env.NATIONBUILDER_API_TOKEN
   const debug = process.env.NATIONBUILDER_DEBUG
+  const recruiter_id = process.env.NATIONBUILDER_RECRUITER_ID
   const eventIndexes = digitMatch.map(match => parseInt(match, 10) - 1)
   const contact = await CampaignContact.get(campaignContactId)
   const fields = JSON.parse(contact.custom_fields)
@@ -55,10 +57,12 @@ export async function processAction(questionResponse, interactionStep, campaignC
     for (let i = 0; i < eventIndexes.length; i++) {
       const eventId = nationbuilder_event_ids[eventIndexes[i]]
       try {
+        const rsvp_params = { event_id: eventId , person_id: fields.nationbuilder_id }
+        if (recruiter_id) rsvp_params['recruiter_id'] = recruiter_id
         const params = {
           url: `https://${nation}.nationbuilder.com/api/v1/sites/${site}/pages/events/${eventId}/rsvps`,
           qs: { access_token: token },
-          json: { rsvp: { event_id: eventId , person_id: fields.nationbuilder_id }}
+          json: { rsvp: rsvp_params }
         }
         if (debug) console.error('Request: ', params)
         if (debug) request.debug = true

@@ -47,7 +47,8 @@ describe('nationbuilder-rsvp handler', () => {
         fixtures.token = process.env.NATIONBUILDER_API_TOKEN = 'test_token'
         fixtures.nation = process.env.NATIONBUILDER_NATION = 'test'
         fixtures.nationbuilder_event_ids = '[1, 2]'
-        fixtures.nationbuilder_id = 55 
+        fixtures.nationbuilder_id = 55
+        fixtures.recruiter_id = process.env.NATIONBUILDER_RECRUITER_ID = '2222'
         fixtures.organization = await Organization.save({ name: 'NationBuilder' })
         fixtures.campaign = await Campaign.save({ title: 'test', organization_id: fixtures.organization.id })
         fixtures.campaignContact = await CampaignContact.save({
@@ -82,11 +83,13 @@ describe('nationbuilder-rsvp handler', () => {
 
         it('should call the NationBuilder API', async () => {
           const rsvpApi1 = nock(`https://${fixtures.nation}.nationbuilder.com`)
-            .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/1/rsvps`, { rsvp: { person_id: fixtures.nationbuilder_id, event_id: 1 } } )
+            .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/1/rsvps`, {
+              rsvp: { person_id: fixtures.nationbuilder_id, event_id: 1, recruiter_id: fixtures.recruiter_id } } )
             .query({ access_token: fixtures.token })
             .reply(200, { rsvp: { id: 1, event_id: 1, person_id: fixtures.nationbuilder_id }})
           const rsvpApi2 = nock(`https://${fixtures.nation}.nationbuilder.com`)
-            .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, { rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2 } } )
+            .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, {
+              rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2, recruiter_id: fixtures.recruiter_id } } )
             .query({ access_token: fixtures.token })
             .reply(200, { rsvp: { id: 2, event_id: 2, person_id: fixtures.nationbuilder_id }})
           await processAction(fixtures.questionResponse, fixtures.interactionStep, fixtures.campaignContact.id);
@@ -101,7 +104,8 @@ describe('nationbuilder-rsvp handler', () => {
 
       it('should record any errors with the API', async () => {
         const rsvpApi = nock(`https://${fixtures.nation}.nationbuilder.com`)
-          .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, { rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2 } } )
+          .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, {
+            rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2, recruiter_id: fixtures.recruiter_id } } )
           .query({ access_token: fixtures.token })
           .reply(500, { error: 'some error' })
         await processAction(fixtures.questionResponse, fixtures.interactionStep, fixtures.campaignContact.id);
@@ -114,7 +118,8 @@ describe('nationbuilder-rsvp handler', () => {
 
       it('should ignore people already RSVPed', async () => {
         const rsvpApi = nock(`https://${fixtures.nation}.nationbuilder.com`)
-          .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, { rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2 } } )
+          .post(`/api/v1/sites/${fixtures.site_slug}/pages/events/2/rsvps`, {
+            rsvp: { person_id: fixtures.nationbuilder_id, event_id: 2, recruiter_id: fixtures.recruiter_id } } )
           .query({ access_token: fixtures.token })
           .reply(400, { validation_errors: 'signup_id has already been taken' })
         await processAction(fixtures.questionResponse, fixtures.interactionStep, fixtures.campaignContact.id);
